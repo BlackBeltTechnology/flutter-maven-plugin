@@ -1,0 +1,297 @@
+box:
+  id: eu.gcr.io/judo-ng/judo-compiler
+  tag: 3.6.1-jdk11
+no-response-timeout: 15
+command-timeout: 60
+ignore-file: .gitignore
+
+build:
+  steps:	
+    - blackbelttechnology/import-gpg-keys@1.0.4:
+      secretkeys: $GPG_SECRET_KEYS 
+      ownertrust: $GPG_OWNERTRUST
+
+    - blackbelttechnology/version-from-git-tag@1.0.8
+ 
+    - blackbelttechnology/version-from-pom@1.0.2:
+      pom: ./pom.xml
+
+    - script:
+      name: calculate version number
+      code: |-
+        export VERSION_NUMBER=${VERSION_FROM_POM_BASE_VERSION}.$(date +%Y%m%d_%H%M%S)_${VERSION_FROM_GIT_TAG_SHORT_SHA1}_${VERSION_FROM_GIT_TAG_CURRENT_BRANCH_VALID_NAME}
+        echo "Building version: ${VERSION_NUMBER}"
+
+    - wercker/maven:
+      name: Set versions
+      goals: versions:set
+      maven_opts: -Dtycho.mode=maven -DnewVersion=${VERSION_NUMBER}
+      settings: .maven.xml
+      cache_repo: true
+
+# No tycho used in this project yet
+#    - wercker/maven:
+#      name: Update target versions
+#      goals: validate
+#      pom: ./targetdefinition/pom.xml
+#      profiles: update-target-versions
+#      maven_opts: -Dtycho.mode=maven
+#      settings: .maven.xml
+#      cache_repo: true
+
+#    - wercker/maven:
+#      name: Update category versions
+#      goals: validate
+#      pom: ./site/pom.xml
+#      profiles: update-category-versions
+#      maven_opts: -Dtycho.mode=maven
+#      settings: .maven.xml
+#      cache_repo: true
+
+#    - wercker/maven:
+#      name: Update Eclipse metadata
+#      goals: tycho-versions:update-eclipse-metadata
+#      maven_opts: -Dtycho.mode=maven
+#      cache_repo: true
+#      settings: .maven.xml
+
+    - wercker/maven:
+      name: Clean deploy (with build profiles)
+      goals: clean deploy
+      profiles: ${BUILD_PROFILES}
+      settings: .maven.xml
+      maven_opts: -Dorg.ops4j.pax.url.mvn.settings=${WERCKER_ROOT}/.maven.xml -DuseCustomSettings=true
+      cache_repo: true
+
+    - wercker/maven:
+      name: Deploy (with deploy profiles)
+      goals: deploy
+      settings: .maven.xml
+      maven_opts: -Dtycho.mode=maven -DdeployOnly -DskipTests=true -Dgithub_release=true
+      profiles: ${DEPLOY_PROFILES}
+      cache_repo: true
+
+    - script:
+      name: get github release attributes
+      code: |-
+        export GITHUB_RELEASE_BODY=$(cat ./.release/.releasetemplate | jq -aRs . | sed 's/"//g')
+        export GITHUB_RELEASE_TITLE=$(echo "$VERSION_NUMBER" | jq -aRs . | sed 's/"//g')
+        echo "Release title: $GITHUB_RELEASE_TITLE"
+        echo "Release notes: $GITHUB_RELEASE_BODY"
+
+    - github-create-release:
+      token: $GITHUB_ACCESS_TOKEN
+      tag: $VERSION_NUMBER
+      title: $GITHUB_RELEASE_TITLE
+      body: $GITHUB_RELEASE_BODY
+      prerelease: true
+
+#  after-steps:
+#    - mbrevda/github-status:
+#      token: $GITHUB_ACCESS_TOKEN
+#      context: $WERCKER_APPLICATION_NAME
+#      msg: build completed
+#      fail: an error has occurred
+#      url: $WERCKER_RUN_URL
+
+# Based on http://vincent.demeester.fr/posts/2012-07-23-maven-release-gitflow/
+release:
+  steps:
+    - blackbelttechnology/import-gpg-keys@1.0.4:
+      secretkeys: $GPG_SECRET_KEYS 
+      ownertrust: $GPG_OWNERTRUST
+
+# Github for SSH access
+#    - add-to-known_hosts:
+#      hostname: github.com
+#      fingerprint: $GITHUB_RSA_FINGERPRINT
+#      type: rsa
+#    - add-ssh-key:
+#      keyname: GITHUB_SSH_KEY
+
+    - script:
+      name: Set git remote origis
+      code: |-
+             git remote set-url origin https://$GITHUB_ACCESS_TOKEN@github.com/$WERCKER_GIT_OWNER/$WERCKER_GIT_REPOSITORY.git
+             git fetch origin
+
+    - script:
+      name: Display branches
+      code: |-
+             git branch -a
+             git branch -r
+
+
+    - script:
+      name: Set up git for maven
+      code: |-
+             git config --global user.email "oss@blackbelt.hu"
+             git config --global user.name "Wercker Release"
+    
+    - blackbelttechnology/version-from-git-tag@1.0.8
+
+    - script:
+      name: Reset git state to actual commit
+      code: |-
+             git reset --hard $WERCKER_GIT_COMMIT
+
+    - script:
+      name: Create branch for builder
+      code: |-
+             git branch wercker_$WERCKER_RUN_ID
+
+    - blackbelttechnology/version-from-pom@1.0.2:
+      pom: ./pom.xml
+
+    - script:
+      name: Create release branch from current commit
+      code: |-
+             git checkout -b release/v$VERSION_FROM_POM_BASE_VERSION wercker_$WERCKER_RUN_ID
+
+## Deploy using release plugin
+#    - wercker/maven:
+#      name: Prepare release
+#      goals: release:prepare
+#      settings: .maven.xml
+#      profiles: release-blackbelt
+#      cache_repo: true
+#
+#    - wercker/maven:
+#      name: Perform release
+#      goals: release:perform
+#      settings: .maven.xml
+#      profiles: release-blackbelt
+#      cache_repo: true
+
+# Set version and deploy with steps
+    - wercker/maven:
+      name: Set versions
+      goals: versions:set
+      maven_opts: -Dtycho.mode=maven -DnewVersion=${VERSION_FROM_POM_BASE_VERSION} -DgenerateBackupPoms=false
+      settings: .maven.xml
+      cache_repo: true
+
+# No tycho used in this project yet
+#    - wercker/maven:
+#      name: Update target versions
+#      goals: validate
+#      pom: ./targetdefinition/pom.xml
+#      profiles: update-target-versions
+#      maven_opts: -Dtycho.mode=maven
+#      settings: .maven.xml
+#      cache_repo: true
+
+#    - wercker/maven:
+#      goals: validate
+#      name: Update category versions
+#      pom: ./site/pom.xml
+#      profiles: update-category-versions
+#      maven_opts: -Dtycho.mode=maven
+#      settings: .maven.xml
+#      cache_repo: true
+
+#    - wercker/maven:
+#      name: Update Eclipse metadata
+#      goals: tycho-versions:update-eclipse-metadata
+#      maven_opts: -Dtycho.mode=maven
+#      cache_repo: true
+#      settings: .maven.xml
+
+    - wercker/maven:
+      name: Clean deploy (with release profiles)
+      goals: clean deploy
+      profiles: ${RELEASE_PROFILES}
+      settings: .maven.xml
+      maven_opts: -Dorg.ops4j.pax.url.mvn.settings=${WERCKER_ROOT}/.maven.xml -DuseCustomSettings=true
+      cache_repo: true
+
+    - wercker/maven:
+      name: Deploy (with deploy profiles)
+      goals: deploy
+      settings: .maven.xml
+      maven_opts: -Dtycho.mode=maven -DdeployOnly -DskipTests=true -Dgithub_release=true
+      profiles: ${DEPLOY_PROFILES}
+      cache_repo: true
+
+    - script:
+      name: Commit release
+      code: |-
+             git add .
+             git commit -m "Release v$VERSION_FROM_POM_BASE_VERSION"
+
+    - script:
+      name: Tag release branch
+      code: |-
+             git tag -a v$VERSION_FROM_POM_BASE_VERSION -m "Release v$VERSION_FROM_POM_BASE_VERSION"
+
+    - script:
+      name: Increase version number
+      code: "mvn build-helper:parse-version versions:set -DnewVersion=\\${parsedVersion.majorVersion}.\\${parsedVersion.minorVersion}.\\${parsedVersion.nextIncrementalVersion}-SNAPSHOT -DgenerateBackupPoms=false -f ./pom.xml  -Dmaven.repo.local=$WERCKER_CACHE_DIR/.m2"
+ 
+    - script:
+      name: Commit to release branch
+      code: |-
+             git add .
+             git commit -m "Next development cycle"
+
+# End of deploy
+
+    - script:
+      name: Get back to the develop branch
+      code: |-
+             git checkout develop
+
+    - script:
+      name: Merge the version back into develop
+      code: |-
+             git merge --no-ff release/v$VERSION_FROM_POM_BASE_VERSION
+
+
+    - script:
+      name: Checkout master
+      code: |-
+             git checkout master
+
+
+    - script:
+      name: Merge the version back into master, but the tagged version instead of the release/v0.1 HEAD
+      code: |-
+             git merge --no-ff release/v$VERSION_FROM_POM_BASE_VERSION~1
+
+    - script:
+      name: Draw git
+      code: |-
+             git log --graph --oneline --all
+
+
+    - script:
+      name: Delete release branch
+      code: |-
+             git branch -D release/v$VERSION_FROM_POM_BASE_VERSION
+
+    - script:
+      name: Delete builder branch
+      code: |-
+             git branch -D wercker_$WERCKER_RUN_ID
+
+
+    - script:
+      name: Push everything
+      code: |-
+             git push origin --all
+             git push origin --tags
+
+    - script:
+      name: get github release attributes
+      code: |-
+        export GITHUB_RELEASE_BODY=$(cat ./.release/.releasetemplate | jq -aRs . | sed 's/"//g')
+        export GITHUB_RELEASE_TITLE=$(echo "$VERSION_NUMBER" | jq -aRs . | sed 's/"//g')
+        echo "Release title: $GITHUB_RELEASE_TITLE"
+        echo "Release notes: $GITHUB_RELEASE_BODY"
+
+    - github-create-release:
+      token: $GITHUB_ACCESS_TOKEN
+      tag: $VERSION_NUMBER
+      title: $GITHUB_RELEASE_TITLE
+      body: $GITHUB_RELEASE_BODY
+

@@ -1,0 +1,222 @@
+Flutter maven plugin
+====================
+
+image::https://app.wercker.com/status/6bf0752c383da9e526e8ff73d860845d/m/develop[link="https://app.wercker.com/project/byKey/6bf0752c383da9e526e8ff73d860845d" float="center"]
+
+
+This plugin manages and executes https://flutter.dev/[flutter] commands inside maven project. 
+It handles the https://flutter.dev/[flutter] installation, preinstalled
+flutter isn't required to use. 
+
+## Requirements
+
+- Maven 3.6 and Java 1.8
+
+## Installation
+
+Include the plugin as a dependency in your Maven project. Change `LATEST_VERSION` to the latest tagged version.
+
+
+```
+<plugins>
+    <plugin>
+        <groupId>hu.blackbelt</groupId>
+        <artifactId>flutter-maven-plugin</artifactId>
+        <!-- Use the latest released version:
+        https://repo1.maven.org/maven2/hu/blackbelt/flutter-maven-plugin/ -->
+        <version>LATEST_VERSION</version>
+        ...
+    </plugin>
+...
+
+```
+
+## Usage
+
+Installing flutter for the project.
+
+The versions of flutter are downloaded from https://storage.googleapis.com/flutter_infra/releases/, extracted and put into a `.flutter` folder created in your installation directory, or checked out from https://github.com/flutter/flutter.git[git]. Flutter will only be "installed" locally to your project. It will not be installed globally on the whole system (and it will not interfere with any flutter installations already present).
+
+```
+<execution>
+    <id>install-flutter</id>
+    <phase>generate-sources</phase>
+    <goals>
+        <goal>install-flutter</goal>
+    </goals>
+    <configuration>
+        <flutterVersion>1.23</flutterVersion> <!--1-->
+        <flutterChannel>stable</flutterChannel>   <!--2-->
+        <workingDirectory>${basedir}</workingDirectory>   <!--3-->
+        <flutterDownloadRoot>https://storage.googleapis.com/flutter_infra/releases/</flutterDownloadRoot> <!--4-->
+        <flutterGitUrl>https://github.com/flutter/flutter.git</flutterGitUrl> <!--5-->
+
+        <skip>false</skip> <!--6-->
+        <installDirectory>${basedir}/.flutter</installDirectory>   <!--7-->
+        <tempDirectory>${basedir}/target/temp</tempDirectory>   <!--8-->
+
+        <environmentVariables> <!--9-->
+            <TEST_VAR>${project.build.directory}</TEST_VAR>
+        </environmentVariables> 
+    </configuration>
+</execution>
+```
+
+It can be executed (when pom.xml defines as plugin, full groupId / artifactId / version definition is not required.
+```
+mvn flutter:install-flutter -Dflutter-channel="beta"
+```
+All parameters are optional.
+
+<1> The installed flutter version. When version is defined channel is not used. In this case the flutter is installed from download site. This property can be defined in command line with `-Dflutter-version`
+
+<2> The flutter channel is used. When channel is used version can be removed. In this case the git based installation is used. This property can be defined in command line with `-Dflutter-channel` Default to `stable`
+
+<3> The base directory for running all Flutter commands. (Usually the directory that contains pubspec.yaml) This property can be defined in command line with `-Dflutter-working-directory`. 
+Default to `${basedir}`
+
+<4> Flutter binary base download URL.
+This property can be defined in command line with `-Dflutter-download-root`
+Default to `https://storage.googleapis.com/flutter_infra/releases/`
+
+<5> Flutter git URL.
+This property can be defined in command line with `-Dflutter-git-url`
+Default to `https://github.com/flutter/flutter.git`
+
+<6> Skip install.
+This property can be defined in command line with `-Dflutter-install-skip=true`
+
+<7> The base directory for installing flutter
+This property can be defined in command line with `-Dflutter-install-directory`
+Default to: `${basedir}/.flutter`
+
+<8> The temp directory for installing flutter.
+This property can be defined in command line with `-Dflutter-temp-directory`
+Default to: `${basedir}/target/temp`
+
+<9> Environment variables added to the execution of `flutter`.
+
+
+## Running flutter
+
+```
+<execution>
+    <id>flutter</id>
+    <phase>compile</phase>
+    <goals>
+        <goal>flutter</goal>
+    </goals>
+    <configuration>
+        <arguments></arguments> <!--1-->
+        <workingDirectory>${basedir}</workingDirectory>   <!--2-->
+        <skip>false</skip> <!--3-->
+        <installDirectory>${basedir}/.flutter</installDirectory>   <!--4-->
+        <environmentVariables> <!--5-->
+            <TEST_VAR>${project.build.directory}</TEST_VAR>
+        </environmentVariables> 
+    </configuration>
+</execution>
+```
+
+It can be executed (when pom.xml defines as plug. If doesn't full groupId / artifactId / version required.
+```
+mvn flutter:flutter -Dflutter-arguments="doctor"
+```
+All parameters are optional.
+
+<1> Arguments to flutter. This property can be defined in command line with `-Dflutter-arguments`. 
+Default to `pub get`
+
+<2> The base directory for running all Flutter commands. (Usually the directory that contains pubspec.yaml) This property can be defined in command line with `-Dflutter-working-directory`. 
+Default to `${basedir}`
+
+<3> Skip execution.
+This property can be defined in command line with `-Dflutter-skip=true`
+
+<4> The base directory of flutter installation
+This property can be defined in command line with `-Dflutter-install-directory`
+Default to: `${basedir}/.flutter`
+
+<5> Environment variables added to the execution of `flutter`.
+
+
+Example to compile and run in chrome:
+```
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>hu.blackbelt</groupId>
+    <version>LATEST_VERSION</version>
+    <artifactId>flutter-maven-plugin-test</artifactId>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>hu.blackbelt</groupId>
+                <artifactId>flutter-maven-plugin</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+                <executions>
+                    <execution>
+                        <id>install-flutter</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>install-flutter</goal>
+                        </goals>
+                        <configuration>
+                            <flutterChannel>beta</flutterChannel>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>flutter-config-enable-web</id>
+                        <phase>compile</phase>
+                        <goals><goal>flutter</goal></goals>
+                        <configuration>
+                            <arguments>config --enable-web</arguments>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>flutter-pub-get</id>
+                        <phase>compile</phase>
+                        <goals><goal>flutter</goal></goals>
+                    </execution>
+
+                    <execution>
+                        <id>run-chrome-get</id>
+                        <phase>compile</phase>
+                        <goals><goal>flutter</goal></goals>
+                        <configuration>
+                            <arguments>run -d chrome</arguments>
+                        </configuration>
+                    </execution>
+
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
+```
+
+## Proxy settings
+
+If you have configured proxy settings for Maven in your settings.xml file, the plugin will automatically use the proxy for downloading flutter, as well as passing the proxy to flutter commands.
+
+## To build this project
+
+```
+mvn clean install
+```
+## Issues, Contributing
+
+Please post any issues on the https://github.com/BlackBeltTechnology/flutter-maven-plugin/issues[Github's Issue tracker]. 
+https://github.com/BlackBeltTechnology/flutter-maven-plugin/pulls[Pull requests] are welcome! 
+You can find a full list of https://github.com/BlackBeltTechnology/flutter-maven-plugin/graphs/contributors[contributors here].
+
+## Credit
+
+This project heavly insipred by https://github.com/BlackBeltTechnology/flutter-maven-plugin[Frontend maven plugin].
+
+## License
+
+link:LICENSE[Apache 2.0]
