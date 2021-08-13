@@ -7,6 +7,8 @@
     <name>flutter-maven-plugin</name>
     <description>Flutter Maven plugin. It can run to flutter tasks</description>
 
+    <url>https://github.com/${project-repositoryId}</url>
+
     <issueManagement>
         <url>https://github.com/${project-repositoryId}/issues</url>
         <system>GitHub Issues</system>
@@ -29,6 +31,14 @@
             <organizationUrl>http://www.blackbelt.hu</organizationUrl>
         </developer>
     </developers>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
     
     <properties>
         <project-shortname>flutter-maven-plugin</project-shortname>
