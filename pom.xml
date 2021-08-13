@@ -1,11 +1,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>hu.blackbelt.judo</groupId>
-    <version>1.0.0-SNAPSHOT</version>
+    <groupId>hu.blackbelt</groupId>
+    <version>1.0.0</version>
     <artifactId>flutter-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
     <name>flutter-maven-plugin</name>
     <description>Flutter Maven plugin. It can run to flutter tasks</description>
+
+    <url>https://github.com/${project-repositoryId}</url>
 
     <issueManagement>
         <url>https://github.com/${project-repositoryId}/issues</url>
@@ -29,6 +31,14 @@
             <organizationUrl>http://www.blackbelt.hu</organizationUrl>
         </developer>
     </developers>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
     
     <properties>
         <project-shortname>flutter-maven-plugin</project-shortname>
