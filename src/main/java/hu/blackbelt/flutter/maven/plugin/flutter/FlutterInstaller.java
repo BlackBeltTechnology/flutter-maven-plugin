@@ -14,10 +14,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.*;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
+import java.nio.file.attribute.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -107,6 +108,12 @@ public class FlutterInstaller {
         try {
             FlutterExecutorConfig executorConfig = new DefaultFlutterExecutorConfig(this.config);
             File flutterFile = executorConfig.getFlutterPath();
+            try {
+                setExecutablePermission();
+            } catch (InstallationException | IOException e) {
+                logger.error("Could not set permissions");
+            }
+
             if (flutterFile.exists()) {
                 final String version =
                     new FlutterExecutor(executorConfig, Arrays.asList("--version"), null).executeAndGetResult(logger);
@@ -263,10 +270,7 @@ public class FlutterInstaller {
                     throw new InstallationException("Could not install Flutter: Was not allowed to rename "
                             + extractedDirectory + " to " + destinationDirectory);
                 }
-                setExecutable(new File(destinationDirectory, "bin" + File.separator + "flutter"));
-                setExecutable(new File(destinationDirectory, "bin" + File.separator + "dart"));
-                setExecutable(new File(destinationDirectory, "bin" + File.separator + "internal" + File.separator + "shared.sh"));
-                setExecutable(new File(destinationDirectory, "bin" + File.separator + "internal" + File.separator + "update_dart_sdk.sh"));
+                setExecutablePermission();
 
                 deleteTempDirectory(tmpDirectory);
 
@@ -288,6 +292,16 @@ public class FlutterInstaller {
         } catch (ProcessExecutionException e) {
             throw new InstallationException("Could not execute Flutter doctor", e);
         }
+    }
+
+    private void setExecutablePermission() throws InstallationException, IOException {
+        File destinationDirectory = getInstallDirectory();
+
+        addExecPermission(new File(destinationDirectory, "bin" + File.separator + "flutter"));
+        addExecPermission(new File(destinationDirectory, "bin" + File.separator + "dart"));
+        addExecPermission(new File(destinationDirectory, "bin" + File.separator + "internal" + File.separator + "shared.sh"));
+        addExecPermission(new File(destinationDirectory, "bin" + File.separator + "internal" + File.separator + "update_dart_sdk.sh"));
+        addExecPermission(new File(destinationDirectory, "bin" + File.separator + "cache" + File.separator + "dart-sdk" + File.separator + "bin"));
     }
 
     private void installFlutterDefaultFromGit() throws InstallationException {
@@ -337,6 +351,9 @@ public class FlutterInstaller {
     }
 
     private void setExecutable(File destinationBinary) throws InstallationException {
+        if (!destinationBinary.exists()) {
+            return;
+        }
         if (!destinationBinary.setExecutable(true, false)) {
             throw new InstallationException(
                     "Could not install Flutter: Was not allowed to make " + destinationBinary + " executable.");
@@ -431,4 +448,44 @@ public class FlutterInstaller {
             }
         });
     }
+
+    private void addExecPermission(final File file) throws IOException {
+        if (!file.exists()) {
+            return;
+        }
+        if (file.isDirectory()) {
+            Files.walk(file.toPath()).filter(path -> !Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)).forEach(f -> {
+                try {
+                    addExecPermission(f.toFile());
+                } catch (IOException e) {
+                }
+            });
+        }
+        Path path = file.toPath();
+
+        Set<String> fileAttributeView = FileSystems.getDefault().supportedFileAttributeViews();
+
+        if (fileAttributeView.contains("posix")) {
+            final Set<PosixFilePermission> permissions;
+            try {
+                permissions = Files.getPosixFilePermissions(path);
+            } catch (UnsupportedOperationException e) {
+                logger.debug("Exec file permission is not set", e);
+                return;
+            }
+            permissions.add(PosixFilePermission.OWNER_EXECUTE);
+            Files.setPosixFilePermissions(path, permissions);
+
+        } else if (fileAttributeView.contains("acl")) {
+            String username = System.getProperty("user.name");
+            UserPrincipal userPrincipal = FileSystems.getDefault().getUserPrincipalLookupService().lookupPrincipalByName(username);
+            AclEntry aclEntry = AclEntry.newBuilder().setPermissions(AclEntryPermission.EXECUTE).setType(AclEntryType.ALLOW).setPrincipal(userPrincipal).build();
+
+            AclFileAttributeView acl = Files.getFileAttributeView(path, AclFileAttributeView.class, LinkOption.NOFOLLOW_LINKS);
+            List<AclEntry> aclEntries = acl.getAcl();
+            aclEntries.add(aclEntry);
+            acl.setAcl(aclEntries);
+        }
+    }
+
 }

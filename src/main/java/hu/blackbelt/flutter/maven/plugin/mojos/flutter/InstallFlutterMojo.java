@@ -18,7 +18,7 @@ public final class InstallFlutterMojo extends AbstractFlutterMojo {
     /**
      * Where to download Flutter binary from. Defaults to https://storage.googleapis.com/flutter_infra/releases/
      */
-    @Parameter(property = "flutter-download-root", required = false, defaultValue = "https://storage.googleapis.com/flutter_infra/releases/")
+    @Parameter(property = "flutter-download-root", required = false, defaultValue = "https://storage.googleapis.com/flutter_infra_release/releases/")
     private String flutterDownloadRoot;
 
     /**
