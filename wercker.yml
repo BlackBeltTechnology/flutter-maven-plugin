@@ -285,7 +285,7 @@ release:
       name: get github release attributes
       code: |-
         export GITHUB_RELEASE_BODY=$(cat ./.release/.releasetemplate | jq -aRs . | sed 's/"//g')
-        export GITHUB_RELEASE_TITLE=$(echo "$VERSION_NUMBER" | jq -aRs . | sed 's/"//g')
+        export GITHUB_RELEASE_TITLE=$(echo "$VERSION_FROM_POM_BASE_VERSION" | jq -aRs . | sed 's/"//g')
         echo "Release title: $GITHUB_RELEASE_TITLE"
         echo "Release notes: $GITHUB_RELEASE_BODY"
 

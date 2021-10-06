@@ -51,7 +51,7 @@ final class ProcessExecutor {
             throws ProcessExecutionException {
         logger.debug("Executing command line {}", commandLine);
         try {
-            ExecuteStreamHandler streamHandler = new PumpStreamHandler(stdout, stderr);
+            ExecuteStreamHandler streamHandler = new PumpStreamHandler(stdout, stderr, System.in);
             executor.setStreamHandler(streamHandler);
 
             int exitValue = executor.execute(commandLine, environment);
