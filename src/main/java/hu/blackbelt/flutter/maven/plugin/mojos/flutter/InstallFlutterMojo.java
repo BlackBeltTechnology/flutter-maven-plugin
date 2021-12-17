@@ -64,26 +64,29 @@ public final class InstallFlutterMojo extends AbstractFlutterMojo {
 
     @Override
     public void execute(FlutterPluginFactory factory) throws InstallationException {
-        ProxyConfig proxyConfig = MojoUtils.getProxyConfig(session, decrypter);
-        String flutterDownloadRoot = getFlutterDownloadRoot();
-        String flutterGitUrl = getFlutterGitUrl();
-        Server server = MojoUtils.decryptServer(serverId, session, decrypter);
-        if (null != server) {
-            factory.getFlutterInstaller(proxyConfig)
-                .setFlutterVersion(flutterVersion)
-                .setFlutterChannel(flutterChannel)
-                .setFlutterDownloadRoot(flutterDownloadRoot)
-                .setFlutterGitUrl(flutterGitUrl)
-                .setUserName(server.getUsername())
-                .setPassword(server.getPassword())
-                .install();
-        } else {
-            factory.getFlutterInstaller(proxyConfig)
-                .setFlutterVersion(flutterVersion)
-                .setFlutterChannel(flutterChannel)
-                .setFlutterDownloadRoot(flutterDownloadRoot)
-                .setFlutterGitUrl(flutterGitUrl)
-                .install();
+        synchronized(lock) {
+
+            ProxyConfig proxyConfig = MojoUtils.getProxyConfig(session, decrypter);
+            String flutterDownloadRoot = getFlutterDownloadRoot();
+            String flutterGitUrl = getFlutterGitUrl();
+            Server server = MojoUtils.decryptServer(serverId, session, decrypter);
+            if (null != server) {
+                factory.getFlutterInstaller(proxyConfig)
+                        .setFlutterVersion(flutterVersion)
+                        .setFlutterChannel(flutterChannel)
+                        .setFlutterDownloadRoot(flutterDownloadRoot)
+                        .setFlutterGitUrl(flutterGitUrl)
+                        .setUserName(server.getUsername())
+                        .setPassword(server.getPassword())
+                        .install();
+            } else {
+                factory.getFlutterInstaller(proxyConfig)
+                        .setFlutterVersion(flutterVersion)
+                        .setFlutterChannel(flutterChannel)
+                        .setFlutterDownloadRoot(flutterDownloadRoot)
+                        .setFlutterGitUrl(flutterGitUrl)
+                        .install();
+            }
         }
     }
 

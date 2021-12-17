@@ -5,17 +5,17 @@ import hu.blackbelt.flutter.maven.plugin.api.ProxyConfig;
 import hu.blackbelt.flutter.maven.plugin.api.TaskRunnerException;
 import hu.blackbelt.flutter.maven.plugin.flutter.FlutterPluginFactory;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.plugins.annotations.Component;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.*;
 import org.apache.maven.settings.crypto.SettingsDecrypter;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
 import java.io.File;
 import java.util.Collections;
 
-@Mojo(name="flutter", defaultPhase = LifecyclePhase.GENERATE_RESOURCES, threadSafe = true)
+@Mojo(name="flutter", defaultPhase = LifecyclePhase.GENERATE_RESOURCES,
+        threadSafe = true,
+        instantiationStrategy = InstantiationStrategy.PER_LOOKUP,
+        executionStrategy = "always" )
 public final class FlutterMojo extends AbstractFlutterMojo {
 
     /**
@@ -46,6 +46,12 @@ public final class FlutterMojo extends AbstractFlutterMojo {
     @Parameter(property = "flutter-skip", defaultValue = "${flutter-skip}")
     private boolean skip;
 
+    /**
+     * Parallel enabled. Default is "false".
+     */
+    @Parameter(defaultValue = "false", property = "flutter.parallel", required = false)
+    private Boolean parallel;
+
     @Component(role = SettingsDecrypter.class)
     private SettingsDecrypter decrypter;
 
@@ -62,8 +68,19 @@ public final class FlutterMojo extends AbstractFlutterMojo {
             return new ProxyConfig(Collections.<ProxyConfig.Proxy>emptyList());
         }
     }
+
     @Override
     public void execute(FlutterPluginFactory factory) throws TaskRunnerException {
+        if (!parallel) {
+            synchronized (lock) {
+                executeTask(factory);
+            }
+        } else {
+            executeTask(factory);
+        }
+    }
+
+    private void executeTask(FlutterPluginFactory factory) throws TaskRunnerException {
         File pubspec = new File(workingDirectory, "pubspec.yaml");
         if (buildContext == null || buildContext.hasDelta(pubspec) || !buildContext.isIncremental()) {
             ProxyConfig proxyConfig = getProxyConfig();
