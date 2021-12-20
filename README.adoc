@@ -140,7 +140,7 @@ Default to: `${basedir}/.flutter`
 
 <5> Environment variables added to the execution of `flutter`.
 
-<3> Parallel build enabled in maven.
+<6> Parallel build enabled in maven.
 Maven supports parallel build with `-T` parameter. The plugin supports parallel build with limitations. When several flutter project is
 built in parallel `pub get` `pub clean` and some other commands which is related directly to flutter dependency itself can cause harm. To avoid
 the plugin execution is synchronized by default. There are some project specific build steps whivh can be run parallel, for example compile, build runner.
