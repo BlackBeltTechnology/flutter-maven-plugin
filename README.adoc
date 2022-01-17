@@ -114,6 +114,7 @@ Default to: `${basedir}/target/temp`
         <environmentVariables> <!--5-->
             <TEST_VAR>${project.build.directory}</TEST_VAR>
         </environmentVariables> 
+        <parallel>false</parallel> <!--6-->
     </configuration>
 </execution>
 ```
@@ -138,6 +139,13 @@ This property can be defined in command line with `-Dflutter-install-directory`
 Default to: `${basedir}/.flutter`
 
 <5> Environment variables added to the execution of `flutter`.
+
+<6> Parallel build enabled in maven.
+Maven supports parallel build with `-T` option. The plugin supports parallel build with limitations. When several flutter projects are
+built in parallel `pub get` `pub clean` and some other commands which are related directly to flutter itself can cause harm. To avoid this situation
+the plugin execution is synchronized by default. There are some project specific build steps whivh can be run parallel, for example compile, build runner.
+
+This property can be defined in command line with `-Dflutter-parallel=false`
 
 
 Example to compile and run in chrome:
@@ -172,6 +180,7 @@ Example to compile and run in chrome:
                         <goals><goal>flutter</goal></goals>
                         <configuration>
                             <arguments>config --enable-web</arguments>
+                            <parallel>false</parallel>
                         </configuration>
                     </execution>
 
@@ -179,6 +188,9 @@ Example to compile and run in chrome:
                         <id>flutter-pub-get</id>
                         <phase>compile</phase>
                         <goals><goal>flutter</goal></goals>
+                        <configuration>
+                            <parallel>false</parallel>
+                        </configuration>
                     </execution>
 
                     <execution>

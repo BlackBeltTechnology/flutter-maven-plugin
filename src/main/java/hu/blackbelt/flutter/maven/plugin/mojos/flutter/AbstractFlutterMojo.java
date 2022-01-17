@@ -18,6 +18,8 @@ import org.eclipse.aether.RepositorySystemSession;
 
 public abstract class AbstractFlutterMojo extends AbstractMojo {
 
+    public static final Object lock = new Object();
+
     @Component
     protected MojoExecution execution;
 
