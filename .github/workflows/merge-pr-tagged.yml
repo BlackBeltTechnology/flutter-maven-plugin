@@ -1,0 +1,93 @@
+name: Auto merge pull request on merge-pr/<pr number> tags
+
+on:
+  push:
+    tags:
+      - merge-pr/*
+
+jobs:
+  merge_incremental_and_release_pr:
+    name: Merge pull request on merge-pr/<pr number> tag
+    runs-on: judong
+    timeout-minutes: 5
+    steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: Get the current PR number
+        uses: jwalton/gh-find-current-pr@v1
+        id: current-pr
+        with:
+          state: open
+
+      - name: Project context
+        id: context
+        uses: zero88/gh-project-context@v1.1
+
+      - name: Print git references
+        run: |-
+          echo "Ref: ${{ github.ref }}"
+          echo "Head ref: ${{ github.head_ref }}"
+          echo "Base ref: ${{ github.base_ref }}"
+          echo "PR number: ${{ steps.current-pr.outputs.pr }}"
+
+      - name: Get PR number
+        id: pr
+        run: |
+          pr=$(echo ${{ github.ref }} | cut -d/ -f4)
+          echo "PR: $pr"
+          echo "::set-output name=pr::$pr"
+
+      - name: Merge Pull Request
+        uses: juliangruber/merge-pull-request-action@v1
+        with:
+          github-token: ${{ secrets.OSS_PAT }}
+          number: ${{ steps.pr.outputs.pr }}
+          method: squash
+
+      - name: Delete merge-pr tag
+        uses: dev-drprasad/delete-tag-and-release@v0.2.0
+        with:
+          tag_name: 'merge-pr/${{ steps.pr.outputs.pr }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create message
+        id: message
+        if: ${{ always() }}
+        run: |-
+          if [ "${{ job.status }}" == "success" ]; then
+            message=":check_mark_button: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            message="${message} PR merged: https://github.com/${{ github.repository }}/pull/${{ steps.pr.outputs.pr }}"
+          fi
+          if [ "${{ job.status }}" == "failure" ]; then
+            message=":cross_mark: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"    
+            message="${message} Error PR merge: https://github.com/${{ github.repository }}/pull/${{ steps.pr.outputs.pr }}"        
+          fi
+          if [ "${{ job.status }}" == "canceled" ]; then
+            message=":cross_mark: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"    
+            message="${message} Canceled PR merge: https://github.com/${{ github.repository }}/pull/${{ steps.pr.outputs.pr }}"
+          fi
+          echo "::set-output name=message::${message}"
+
+      - name: Write message to file
+        run: |-
+          echo "${{ steps.message.outputs.message }}"
+          echo "${{ steps.message.outputs.message }}" > build.msg
+
+  #      - name: Send message to skype
+  #        uses: Eloco/docker-action-send-skype@v2
+  #        if: always()
+  #        with:
+  #          skype_username: ${{ secrets.SKYPE_USERNAME }}
+  #         skype_password: ${{ secrets.SKYPE_PASSWORD }}
+  #          skype_ids: 19:0503749da2e44ed9910046678012bdf7@thread.skype
+  #          send_msg_path: build.msg
+

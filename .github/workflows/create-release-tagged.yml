@@ -1,0 +1,94 @@
+name: Auto create release notes on create-release/<version> tag
+on:
+  push:
+    tags:
+      - create-release/*
+jobs:
+  create_release:
+    name: Create release notes on create-release/<version> tag
+    runs-on: judong
+    timeout-minutes: 5
+    steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: Project context
+        id: context
+        uses: zero88/gh-project-context@v1.1
+
+      - name: Print git references
+        run: |-
+          echo "Ref: ${{ github.ref }}"
+          echo "Head ref: ${{ github.head_ref }}"
+          echo "Base ref: ${{ github.base_ref }}"
+
+      - name: Get version and branch
+        id: version
+        run: |
+          version=$(echo ${{ github.ref }} | cut -d/ -f4)
+          branch=$(echo ${{ github.event.base_ref }} | cut -d/ -f3)
+          echo "Version: $version"
+          echo "::set-output name=version::$version"
+          echo "::set-output name=branch::$branch"
+
+      - name: Create release note
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: v${{ steps.version.outputs.version }}
+          tag: v${{ steps.version.outputs.version }}
+          generateReleaseNotes: true
+          draft: false
+          prerelease: ${{ contains(github.head_ref, 'master') || contains(github.ref, 'master') }}
+
+      - name: Set latest tag
+        uses: EndBug/latest-tag@latest
+        with:
+          tag-name: 'latest_${{ steps.version.outputs.branch }}'
+
+      - name: Delete create-release tag
+        uses: dev-drprasad/delete-tag-and-release@v0.2.0
+        with:
+          tag_name: 'create-release/${{ steps.version.outputs.version }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create message
+        id: message
+        if: ${{ always() }}
+        run: |-
+          if [ "${{ job.status }}" == "success" ]; then
+            message=":check_mark_button: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            message="${message} Release notes: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }}"
+          fi
+          if [ "${{ job.status }}" == "failure" ]; then
+            message=":cross_mark: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"    
+            message="${message} Error create release notes"        
+          fi
+          if [ "${{ job.status }}" == "canceled" ]; then
+            message=":cross_mark: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"    
+            message="${message} Release notes canceled"        
+          fi
+          echo "::set-output name=message::${message}"
+
+      - name: Write message to file
+        run: |-
+          echo "${{ steps.message.outputs.message }}"
+          echo "${{ steps.message.outputs.message }}" > build.msg
+
+  #      - name: Send message to skype
+  #        uses: Eloco/docker-action-send-skype@v2
+  #        if: always()
+  #        with:
+  #          skype_username: ${{ secrets.SKYPE_USERNAME }}
+  #         skype_password: ${{ secrets.SKYPE_PASSWORD }}
+  #          skype_ids: 19:0503749da2e44ed9910046678012bdf7@thread.skype
+  #          send_msg_path: build.msg
+
