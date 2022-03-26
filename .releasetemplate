@@ -1,6 +1,0 @@
-**Branch:** 
-${env.WERCKER_GIT_BRANCH}
-**Maven repository:** 
-${env.JUDONG_MAVEN_UPSTREAM_SNAPSHOT}/#browse/browse:maven-judo-release:hu%2Fblackbelt%2Feclipse%2F${project-shortname}
-**Wercker:** 
-https://app.wercker.com/${project-repositoryId}/runs/build/${env.WERCKER_RUN_ID}
