@@ -64,36 +64,14 @@
         
     <build>
         <plugins>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
-                <extensions>true</extensions>
-                <version>3.5</version>
-                <configuration>
-                    <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>mojo-descriptor</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>descriptor</goal>
-                        </goals>
-                        <!--
-                        <configuration>
-                            <goalPrefix>flutter</goalPrefix>
-                        </configuration> -->
-                    </execution>
-                    <execution>
-                        <id>help-goal</id>
-                        <goals>
-                            <goal>helpmojo</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <version>3.6.0</version>
             </plugin>
 
-            <plugin>                                                                                                <!--1.8rol 11-re-->
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.7.0</version>
@@ -115,8 +93,6 @@
                 <version>3.2.0</version>
             </plugin>
         </plugins>
-
-
 
         <pluginManagement>
             <plugins>
@@ -154,9 +130,7 @@
                     </configuration>
                 </plugin>
 
-
-
-                <plugin>                                                    <!--en adtam hozza-->
+                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
                     <version>2.5.2</version>
@@ -187,9 +161,6 @@
                     <artifactId>build-helper-maven-plugin</artifactId>
                     <version>3.0.0</version>
                 </plugin>
-
-
-
 
             </plugins>
         </pluginManagement>
@@ -325,7 +296,7 @@
         </dependency>
     </dependencies>
 
-    <profiles>                                                                                     <!--done maybe env.judos but not sure-->
+    <profiles>
         <profile>
             <id>modules</id>
             <activation>
