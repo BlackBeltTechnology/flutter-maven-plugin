@@ -1,0 +1,29 @@
+name: Add JIRA description to PR
+on:
+  pull_request:
+    types: [ opened, edited ]
+    branches:
+      - '!release/*'
+      - '!increment/*'
+      - '!master'
+      - '!main'
+
+jobs:
+  add-jira-description:
+    name: Add JIRA description to PR
+    runs-on: judong
+    timeout-minutes: 3
+    steps:
+      - name: Enforce Jira Issue Key in Pull Request Title
+        uses: ryanvade/enforce-pr-title-style-action@v1
+        with:
+          projectKey: 'JNG'
+
+      - uses: cakeinpanic/jira-description-action@v0.3.2
+        name: jira-description-action
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          jira-token: ${{ secrets.OSS_JIRA_TOKEN }}
+          jira-base-url: ${{ secrets.JIRA_BASE_URL }}
+          skip-branches: '^(production-release|main|master|release\/v\d+)$'
+          jira-project-key: 'JNG'

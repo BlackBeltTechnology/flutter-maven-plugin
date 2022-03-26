@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>hu.blackbelt</groupId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>${revision}</version>
     <artifactId>flutter-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
     <name>flutter-maven-plugin</name>
@@ -48,53 +48,36 @@
         <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
         <src.dir>src/main</src.dir>
 
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <slf4j-version>1.6.6</slf4j-version>
+        <maven>3.8.3</maven>
+        <deployOnly>false</deployOnly>
 
         <!--
         <log4j.configuration>log4j.properties</log4j.configuration>
         -->
+
+        <revision>1.0.2-SNAPSHOT</revision>
     </properties>
 
         
     <build>
         <plugins>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
-                <extensions>true</extensions>
-                <version>3.5</version>
-                <configuration>
-                    <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>mojo-descriptor</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>descriptor</goal>
-                        </goals>
-                        <!--
-                        <configuration>
-                            <goalPrefix>flutter</goalPrefix>
-                        </configuration> -->
-                    </execution>
-                    <execution>
-                        <id>help-goal</id>
-                        <goals>
-                            <goal>helpmojo</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <version>3.6.0</version>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.7.0</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>11</source>
+                    <target>11</target>
                 </configuration>
             </plugin>
 
@@ -103,12 +86,14 @@
                 <artifactId>maven-source-plugin</artifactId>
                 <version>3.2.1</version>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.2.0</version>
             </plugin>
         </plugins>
+
         <pluginManagement>
             <plugins>
                 <!--This plugin's configuration is used to store Eclipse m2e settings
@@ -144,18 +129,45 @@
                         </lifecycleMappingMetadata>
                     </configuration>
                 </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>2.5.2</version>
+                    <executions>
+                        <execution>
+                            <id>default-install</id>
+                            <configuration>
+                                <skip>${deployOnly}</skip>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>default-test</id>
+                            <configuration>
+                                <skip>${deployOnly}</skip>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>2.8.2</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+
             </plugins>
         </pluginManagement>
     </build>
+
     <dependencies>
-        <!--
-        <dependency>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-archetype-plugin</artifactId>
-            <version>3.2.0</version>
-            <type>maven-plugin</type>
-        </dependency>
-        -->
+
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
@@ -259,14 +271,7 @@
             <artifactId>mojo-executor</artifactId>
             <version>2.3.0</version>
         </dependency>
-        
-<!--
-        <dependency>
-            <groupId>uk.org.lidalia</groupId>
-            <artifactId>sysout-over-slf4j</artifactId>
-            <version>1.0.2</version>
-        </dependency>
--->
+
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
@@ -289,55 +294,32 @@
             <artifactId>slf4j-api</artifactId>
             <version>1.7.30</version>
         </dependency>
-
-        <!--
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.7.30</version>
-        </dependency>
-
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.17</version>
-        </dependency>
-        -->
-        <!--
-        <dependency>
-            <groupId>org.eclipse.emf</groupId>
-            <artifactId>org.eclipse.emf.ecore.xmi</artifactId>
-            <version>2.16.0</version>
-            <scope>compile</scope>
-        </dependency>
-        -->
     </dependencies>
-    
+
     <profiles>
+        <profile>
+            <id>modules</id>
+            <activation>
+                <property>
+                    <name>skipModules</name>
+                    <value>!true</value>
+                </property>
+            </activation>
+        </profile>
+
         <profile>
             <id>sign-artifacts</id>
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
+                        <groupId>org.simplify4u.plugins</groupId>
+                        <artifactId>sign-maven-plugin</artifactId>
+                        <version>0.3.1</version>
                         <executions>
                             <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
-                                <configuration>
-                                    <keyname>${gpg.keyname}</keyname>
-                                    <passphraseServerId>${gpg.keyname}</passphraseServerId>
-                                    <!-- This is necessary for gpg to not try to use the pinentry programs -->
-                                    <gpgArguments>
-                                        <arg>--pinentry-mode</arg>
-                                        <arg>loopback</arg>
-                                    </gpgArguments>
-                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
@@ -346,107 +328,34 @@
         </profile>
 
         <profile>
-            <id>release-dummy</id>
-            <distributionManagement>
-                <snapshotRepository>
-                    <id>dummy-distribution</id>
-                    <url>file:///tmp/maven-snapshot/</url>
-                </snapshotRepository>
-                <repository>
-                    <id>dummy-distribution</id>
-                    <url>file:///tmp/maven-release/</url>
-                </repository>
-            </distributionManagement>
-        </profile>
-
-        <profile>
-            <id>judong-upstream-snapshot-undefined</id>
-            <activation>
-                <property>
-                    <name>!env.JUDONG_MAVEN_UPSTREAM_SNAPSHOT</name>
-                </property>
-            </activation>
-            <properties>
-                <judong-upstream-snapshot>https://nexus.judo.technology/repository/maven-judong/</judong-upstream-snapshot>
-            </properties>
-        </profile>
-        <profile>
-            <id>judong-upstream-snapshot-defined</id>
-            <activation>
-                <property>
-                    <name>env.JUDONG_MAVEN_UPSTREAM_SNAPSHOT</name>
-                </property>
-            </activation>
-            <properties>
-                <judong-upstream-snapshot>${env.JUDONG_MAVEN_UPSTREAM_SNAPSHOT}</judong-upstream-snapshot>
-            </properties>
-        </profile>
-
-        <profile>
-            <id>judong-upstream-release-undefined</id>
-            <activation>
-                <property>
-                    <name>!env.JUDONG_MAVEN_UPSTREAM_RELEASE</name>
-                </property>
-            </activation>
-            <properties>
-                <judong-upstream-release>https://nexus.judo.technology/repository/maven-judong/</judong-upstream-release>
-            </properties>
-        </profile>
-        <profile>
-            <id>judong-upstream-release-defined</id>
-            <activation>
-                <property>
-                    <name>env.JUDONG_MAVEN_UPSTREAM_RELEASE</name>
-                </property>
-            </activation>
-            <properties>
-                <judong-upstream-release>${env.JUDONG_MAVEN_UPSTREAM_RELEASE}</judong-upstream-release>
-            </properties>
-        </profile>
-
-        <profile>
-            <id>release-judong</id>
-            <distributionManagement>
-                <snapshotRepository>
-                    <id>judong-nexus-distribution</id>
-                    <!--suppress UnresolvedMavenProperty -->
-                    <url>${judong-upstream-release}</url>
-                </snapshotRepository>
-                <repository>
-                    <id>judong-nexus-distribution</id>
-                    <!--suppress UnresolvedMavenProperty -->
-                    <url>${judong-upstream-snapshot}</url>
-                </repository>
-            </distributionManagement>
-        </profile>
-
-        <profile>
             <id>release-central</id>
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <extensions>true</extensions>
-                        <version>1.6.8</version>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-deploy-plugin</artifactId>
+                        <version>2.8.2</version>
                         <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                            <skip>true</skip>
                         </configuration>
                     </plugin>
 
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>3.2.1</version>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.8</version>
                         <executions>
                             <execution>
-                                <id>attach-sources</id>
+                                <id>ossrh-deploy</id>
+                                <phase>deploy</phase>
                                 <goals>
-                                    <goal>jar-no-fork</goal>
+                                    <goal>deploy</goal>
                                 </goals>
+                                <configuration>
+                                    <serverId>ossrh</serverId>
+                                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
@@ -465,43 +374,52 @@
         </profile>
 
         <profile>
-            <id>generate-github-release-body</id>
-            <activation>
-                <property>
-                    <name>github_release</name>
-                    <value>true</value>
-                </property>
-            </activation>
+            <id>release-judong</id>
             <build>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <version>3.2.0</version>
+                        <artifactId>maven-deploy-plugin</artifactId>
+                        <version>2.8.2</version>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.8</version>
                         <executions>
                             <execution>
-                                <id>template-github-release-body</id>
-                                <phase>process-resources</phase>
+                                <id>judong-deploy</id>
+                                <phase>deploy</phase>
                                 <goals>
-                                    <goal>copy-resources</goal>
+                                    <goal>deploy</goal>
                                 </goals>
                                 <configuration>
-                                    <outputDirectory>${basedir}/.release</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${project.basedir}</directory>
-                                            <filtering>true</filtering>
-                                            <includes>
-                                                <include>.releasetemplate</include>
-                                            </includes>
-                                        </resource>
-                                    </resources>
+                                    <serverId>judong-nexus-distribution</serverId>
+                                    <nexusUrl>https://nexus.judo.technology/repository/maven-judong-snapshots</nexusUrl>
+                                    <skipStaging>true</skipStaging>
                                 </configuration>
                             </execution>
                         </executions>
                     </plugin>
                 </plugins>
             </build>
+            <distributionManagement>
+                <snapshotRepository>
+                    <id>judong-nexus-distribution</id>
+                    <!--suppress UnresolvedMavenProperty -->
+                    <url>https://nexus.judo.technology/repository/maven-judong-snapshots/</url>
+                </snapshotRepository>
+                <repository>
+                    <id>judong-nexus-distribution</id>
+                    <!--suppress UnresolvedMavenProperty -->
+                    <url>https://nexus.judo.technology/repository/maven-judong-snapshots/</url>
+                </repository>
+            </distributionManagement>
         </profile>
+
     </profiles>
 </project>
