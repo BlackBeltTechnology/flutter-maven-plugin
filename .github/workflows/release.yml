@@ -135,6 +135,9 @@ jobs:
             echo "-SNAPSHOT") \
             | tr -d '\n'`
           fi
+          if [[ ! $NEXT_VERSION =~ ^.*-SNAPSHOT ]]; then
+              NEXT_VERSION="${NEXT_VERSION}-SNAPSHOT"
+          fi
           echo "Next version is: $NEXT_VERSION"
           echo "::set-output name=version::${NEXT_VERSION}"
 
