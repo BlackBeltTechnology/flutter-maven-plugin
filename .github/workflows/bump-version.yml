@@ -1,4 +1,4 @@
-name: Release develop
+name: Bump version
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ on:
         default: "Auto"
 
 jobs:
-  release:
+  bump-version:
     runs-on: judong
     timeout-minutes: 30
     env:
@@ -67,59 +67,16 @@ jobs:
                  }
             ]
 
-
-      - name: ⬇️ Checkout master repository
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.OSS_PAT }}
-          ref: master
-          fetch-depth: 0
-
-      - name: 🔪 Reset master branch to develop
-        run: |
-          git fetch origin develop:develop
-          git reset --hard develop
-
       - name: 🔢 Calculate version number
         id: version
         run: |-
           TAG_NAME=$(echo "${{ steps.context.outputs.branch }}" | cut -d ' ' -f2 | tr '#\/\.-' '_')
           BASE_VERSION=$(./mvnw org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dtycho.mode=maven -DskipModules=true -Dexpression=project.version -q -DforceStdout | cut -d'-' -f 1)
-          if [[ "${{ github.event.inputs.is_release }}" == "true" ]]; then
-            VERSION_NUMBER=${BASE_VERSION}
-          else
-            VERSION_NUMBER=${BASE_VERSION}.$(date +%Y%m%d_%H%M%S)_${{ steps.context.outputs.shortCommitId }}_${TAG_NAME//[(\)]}
-          fi
+          VERSION_NUMBER=${BASE_VERSION}
           echo "Base version from POM: $BASE_VERSION"
           echo "Building version: ${VERSION_NUMBER}"
           echo "version=${VERSION_NUMBER}" >> $GITHUB_OUTPUT
           echo "base-version=${BASE_VERSION}" >> $GITHUB_OUTPUT
-
-      - name: 🔀 Merge master branch to release branch
-        run: |
-          git merge -s ours origin/master
-
-      - name: Set release version
-        run: |-
-          ./mvnw versions:set-property -Dproperty=revision -DnewVersion=${{ steps.version.outputs.base-version }} -Dtycho.mode=maven -DskipModules=true
-
-      - name: ⬆️ Create Pull Request for release into master
-        uses: peter-evans/create-pull-request@v3
-        with:
-          token: ${{ secrets.OSS_PAT }}
-          commit-message: '[RELEASE] Release version: ${{ steps.version.outputs.base-version }}'
-          branch: release/v${{ steps.version.outputs.base-version }}
-          delete-branch: true
-          title: '[RELEASE] Release version: ${{ steps.version.outputs.base-version }} to master'
-          body: >
-            This PR is auto-generated. Creates pull request to master which contains the coresponding release's source code.
-          labels: release, automated pr
-
-      - name: ⬇️ Checkout develop repository
-        uses: actions/checkout@v3
-        with:
-          ref: develop
-          fetch-depth: 0
 
       - name: ⏭️ Increase version number
         id: next_version
@@ -145,17 +102,20 @@ jobs:
 
       - name: Set next version
         run: |-
+          mvn tycho-versions:set-version -DnewVersion=${{ steps.next_version.outputs.version }} -Dtycho.mode=maven
+          mvn tycho-versions:update-eclipse-metadata -Dtycho.mode=maven
+          git ls-files | grep pom.xml | xargs git restore --
           ./mvnw versions:set-property -Dproperty=revision -DnewVersion=${{ steps.next_version.outputs.version }} -Dtycho.mode=maven -DskipModules=true
 
       - name: ⬆️ Create Pull Request for increased version into develop
         uses: peter-evans/create-pull-request@v3
         with:
           token: ${{ secrets.OSS_PAT }}
-          commit-message: '[RELEASE] Increase version to ${{ steps.next_version.outputs.version }}'
+          commit-message: '[BUMP VERSION] Increase version to ${{ steps.next_version.outputs.version }}'
           branch: increment/v${{ steps.next_version.outputs.version }}
           delete-branch: true
           branch-suffix: short-commit-hash
-          title: '[RELEASE] Set develop version to: ${{ steps.next_version.outputs.version }}'
+          title: '[BUMP VERSION] Set develop version to: ${{ steps.next_version.outputs.version }}'
           body: >
             This PR is auto-generated. Increasing development version and creates a pull request to develop.
           labels: release, automated pr
