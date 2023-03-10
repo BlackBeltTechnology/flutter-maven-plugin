@@ -1,29 +1,35 @@
 name: Add JIRA description to PR
 on:
   pull_request:
-    types: [ opened, edited ]
-    branches:
-      - '!release/*'
-      - '!increment/*'
-      - '!master'
-      - '!main'
-
+    types: [opened, edited, synchronize]
+    
 jobs:
   add-jira-description:
     name: Add JIRA description to PR
     runs-on: judong
     timeout-minutes: 3
+    if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
     steps:
-      - name: Enforce Jira Issue Key in Pull Request Title
+      - name: 🛂 Enforce Jira Issue Key in Pull Request Title
+        if: ${{ github.base_ref == 'develop' && (startsWith(github.head_ref, 'feature') || startsWith(github.head_ref, 'bugfix'))}}
         uses: ryanvade/enforce-pr-title-style-action@v1
         with:
           projectKey: 'JNG'
 
-      - uses: cakeinpanic/jira-description-action@v0.3.2
-        name: jira-description-action
+      - name: 🏭 jira-description-action
+        uses: cakeinpanic/jira-description-action@v0.3.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           jira-token: ${{ secrets.OSS_JIRA_TOKEN }}
           jira-base-url: ${{ secrets.JIRA_BASE_URL }}
-          skip-branches: '^(production-release|main|master|release\/v\d+)$'
+          skip-branches: '^(production-release|main|master|release\/v*|increment\/v*)$'
           jira-project-key: 'JNG'
+          
+      - name: 📢 Send message to discord
+        uses: sarisia/actions-status-discord@v1
+        if: ${{ always() && job.status == 'failure' }}
+        with:
+          webhook: ${{ secrets.JUDONG_DISCORD_WEBHOOK }}
+          title: "Github action"
+          description: ":x: Please add issue number to PR message! https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
