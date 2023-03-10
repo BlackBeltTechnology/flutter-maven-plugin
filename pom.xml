@@ -699,7 +699,7 @@
                                 </goals>
                                 <phase>process-sources</phase>
                                 <configuration>
-                                    <licenseName>epl_v2</licenseName>
+                                    <licenseName>apache_v2</licenseName>
                                     <roots>
                                         <root>src/main/java</root>
                                         <root>src/test</root>
@@ -713,7 +713,7 @@
                                 </goals>
                                 <phase>process-sources</phase>
                                 <configuration>
-                                    <licenseName>epl_v2</licenseName>
+                                    <licenseName>apache_v2</licenseName>
                                 </configuration>
                             </execution>
                         </executions>
