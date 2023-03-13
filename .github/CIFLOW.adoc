@@ -1,0 +1,269 @@
+= Development version and branch handling
+:toc:
+:icons: font
+
+== Branches
+
+Versioning policy of JUDO NG modules are based on GitFlow: https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow.
+
+Branches:
+
+* **develop**: development branch contains latest development sources of the last active version
+* **feature/JNG-NUMBER_short_summary**: feature branches are based on **develop** and contains sources of new features that will be included in last active version
+* **(release/)1_0_beta1**: release branches of 1.0-beta1 (release/ prefix is still reserved for CI)
+* **bugfix/JNG-NUMBER_short_summary**, **support/JNG-NUMBER_short_summary**: bugfix and support branches are based on release branches and must be applied to release and development branches of newer versions too
+* **master**: contains latest released sources of the last active version
+
+ifdef::env-github[image::branches.png[title="branches.yml"]]
+ifndef::env-github[]
+[[branches]]
+.branches.yml
+[plantuml, branches, alt="branches.yml"]
+---------------------------------------------------------------------
+digraph GitFlow {
+  rankdir="LR";
+  bgcolor="transparent";
+
+  node[width=0.15, height=0.15, shape=point];
+  edge[weight=2, arrowhead=vee];
+
+  0[shape=box, style=filled, label="master", color=chartreuse]
+  1[shape=box, style=filled, label="develop", color=cornflowerblue]
+  2[shape=box, style=filled, label="feature/JNG-1", color=gold]
+  4[shape=box, style=filled, label="feature/JNG-2", color=gold]
+  12[shape=box, style=filled, label="feature/JNG-3", color=gold]
+  14[shape=box, style=filled, label="(release/)1.0-beta1", color=cyan]
+  17[shape=box, style=filled, label="bugfix/JNG-4", color=firebrick1]
+  19[shape=box, style=filled, label="release/1.0-beta2", color=cyan]
+  23[shape=box, style=filled, label="support/JNG-5", color=aquamarine]
+  26[shape=box, style=filled, label="hotfix/JNG-6", color=firebrick2]
+  27[shape=box, style=filled, label="release/1.1-beta1", color=cyan]
+
+  node[group=develop, color=cornflowerblue];
+  0 -> 1 -> 7 -> 8 -> 9 -> 10 -> 11 -> 30 -> 31;
+  node[group=feature_JNG_1, color=gold];
+  1 -> 4 -> 5 -> 6 -> 8;
+  node[group=feature_JNG_2, color=gold];
+  1 -> 2 -> 3 -> 7;
+  node[group=feature_JNG_3, color=gold];
+  8 -> 12 -> 13 -> 9;
+  node[group=release_1_0_beta1, color=cyan];
+  8 -> 14 -> 15 -> 16 -> 10;
+  node[group=bugfix_JNG_4, color=firebrick1];
+  14 -> 17 -> 18 -> 16;
+  node[group=release_1_0_beta2, color=cyan];
+  9 -> 19 -> 20 -> 21 -> 33;
+  16 -> 21;
+  26 -> 33;
+  node[group=support_JNG_5, color=aquamarine];
+  19 -> 23 -> 24 -> 20;
+  node[group=master, color=chartreuse];
+  0 -> 22 -> 25 -> 32;
+  21 -> 22;
+  21 -> 11;
+  node[group=hotfix_JNG_6, color=firebrick2];
+  22 -> 26 -> 25;
+  26 -> 30;
+  node[group=release_1_1_beta1, color=cyan];
+  11 -> 27 -> 28 -> 29 -> 31;
+  26 -> 28;
+  29 -> 32;
+}
+---------------------------------------------------------------------
+endif::[]
+
+== Version numbers
+
+Version numbers are increased using semantic versioning:
+
+* do not change version numbers on starting feature/ branches
+* 2nd number in version of *develop* branch is increased when a release branch started
+* do not change version numbers on bugfix/ branches - that are applied on release branches during testing before releasing it (merging to master)
+* 3rd number in version of support/ branches is increased when started - it is used to support a previous release including new (minor) changes; support/ branches are merged back to release branch when update is released (without merging changes to master)
+* 3rd number in version of hotfix/ branches is increased when started (that are applied on both release and master branches)
+
+=== Gihub action flows
+
+ifdef::env-github[image::build.png[title="build.yml"]]
+ifndef::env-github[]
+[[build]]
+.build.yml
+[plantuml, build, alt="build.yml"]
+---------------------------------------------------------------------
+@startuml
+
+partition build.yml {
+  skinparam shadowing false
+  skinparam ActivityBackgroundColor WhiteSmoke
+  skinparam ActivityBorderColor Black
+  skinparam ActivityBorderThickness 1
+  skinparam ArrowColor Black
+  skinparam ActivityDiamondBackgroundColor WhiteSmoke
+  skinparam ActivityDiamondBorderColor Black
+
+  #business:**when**\npush on **__develop__** branch\nor\npull request on **__develop__**, **__master__**, **__increment/*__**, **__release/*__** __branch__;
+
+  if (Commit or Pull request's base branch?) then (master, release/*)
+    :set **__version__**\nfrom project **pom.xml** (version without '-SNAPSHOT');
+  else (develop, increment/*)  
+    :set __version__ **major.minor.qualifier.date_commitId_branchName**\nfrom project **pom.xml** (version without '-SNAPSHOT');
+  endif
+
+  :build and deploy to nexus;
+
+  :create git __tag__ **v__<version>__**;
+
+  if (Pull request or commit base branch?) then (increment/*, release/*)
+    :create __tag__ **merge-pr/__<version>__**;
+    fork
+      #palegreen:**trigger merge-pr-tagged.yml**;
+      end
+    fork again
+    end fork
+  endif
+  if (Pull request's or commit base branch?) then (develop)
+    :build change log;
+    :create **github release** (prerelease) with change log;
+  endif
+  end
+
+}
+
+@enduml
+---------------------------------------------------------------------
+endif::[]
+
+
+ifdef::env-github[image::merge-pr-tagged.png[title="merge-pr-tagged.yml"]]
+ifndef::env-github[]
+[[merge-pr-tagged]]
+.merge-pr-tagged.yml
+[plantuml, merge-pr-tagged, alt="merge-pr-tagged.yml"]
+---------------------------------------------------------------------
+@startuml
+
+partition merge-pr-tagged.yml {
+  skinparam shadowing false
+  skinparam ActivityBackgroundColor WhiteSmoke
+  skinparam ActivityBorderColor Black
+  skinparam ActivityBorderThickness 1
+  skinparam ArrowColor Black
+  skinparam ActivityDiamondBackgroundColor WhiteSmoke
+  skinparam ActivityDiamondBorderColor Black
+
+  #business:**when**\npush on **__merge-pr/*__** tag;
+
+  :get __<version>__ from tag name;
+
+  if (check __<version>__ format) then (major.minor.qualifier)
+    :merge pull request to __master__;
+    fork
+      #palegreen:**trigger create-release-on-master.yml**;
+      end
+    fork again
+    end fork
+  else
+    :squash pull request to __develop__;
+    fork
+      #palegreen:**trigger build.yml**;
+      end
+    fork again
+    end fork
+  endif
+
+  :delete __tag__ **merge-pr/__<version>__**;
+  end
+
+}
+
+@enduml
+---------------------------------------------------------------------
+endif::[]
+
+ifdef::env-github[image::create-release-on-master.png[title="create-release-on-master.yml"]]
+ifndef::env-github[]
+[[create-release-on-master]]
+.create-release-on-master.yml
+[plantuml, create-release-on-master, alt="create-release-on-master.yml"]
+---------------------------------------------------------------------
+@startuml
+
+partition create-release-on-master.yml {
+  skinparam shadowing false
+  skinparam ActivityBackgroundColor WhiteSmoke
+  skinparam ActivityBorderColor Black
+  skinparam ActivityBorderThickness 1
+  skinparam ArrowColor Black
+  skinparam ActivityDiamondBackgroundColor WhiteSmoke
+  skinparam ActivityDiamondBorderColor Black
+
+  #business:**when**\npush on **__master__** __branch__;
+
+  :get __<version>__ from __tag__ name;
+
+  :build change log;
+  
+  :create **github release** (last) with change log;
+
+  end
+}
+
+@enduml
+---------------------------------------------------------------------
+endif::[]
+
+
+ifdef::env-github[image::release.png[title="release.yml"]]
+ifndef::env-github[]
+[[release]]
+.release.yml
+[plantuml, release, alt="release.yml"]
+---------------------------------------------------------------------
+@startuml
+
+partition release.yml {
+  skinparam shadowing false
+  skinparam ActivityBackgroundColor WhiteSmoke
+  skinparam ActivityBorderColor Black
+  skinparam ActivityBorderThickness 1
+  skinparam ArrowColor Black
+  skinparam ActivityDiamondBackgroundColor WhiteSmoke
+  skinparam ActivityDiamondBorderColor Black
+
+  #business:**when**\nmanually triggred with **__given version__**\nwhich is **'auto'** or any other in **major.minor.qualifier** form;
+
+  if (__given version__ is) then ('auto') 
+     :set **__release version__**\nfrom project **pom.xml** (version without '-SNAPSHOT');
+  else
+     :set **__release version__** to given **version**;
+  endif
+
+   :set **__next version__** to **__release version__**'s qualifier + 1;
+
+  :create pull request on **__master__** with **__release version__**;
+  fork
+    #palegreen:**trigger build.yml**;
+    end
+  fork again
+  end fork
+  :create pull request on **__develop__** with **__next version__**;
+  fork
+    #palegreen:**trigger build.yml**;
+    end
+  fork again
+  end fork
+  end
+}
+
+@enduml
+---------------------------------------------------------------------
+endif::[]
+
+
+== How to develop
+
+For issue tracking we are using https://blackbelt.atlassian.net/jira/dashboards[JIRA]. Golden rule:
+
+IMPORTANT: *There is no commit without ticket number*
+
+So for pull request or commit `JNG-xxx` have to be presented in the commit.
