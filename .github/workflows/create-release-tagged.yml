@@ -15,13 +15,13 @@ jobs:
         run: echo "$GITHUB_CONTEXT"
 
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 2
 
       - name: Project context
         id: context
-        uses: zero88/gh-project-context@v1.1
+        uses: zero88/gh-project-context@v1.2
 
       - name: Print git references
         run: |-
@@ -35,8 +35,8 @@ jobs:
           version=$(echo ${{ github.ref }} | cut -d/ -f4)
           branch=$(echo ${{ github.event.base_ref }} | cut -d/ -f3)
           echo "Version: $version"
-          echo "::set-output name=version::$version"
-          echo "::set-output name=branch::$branch"
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "branch=$branch" >> $GITHUB_OUTPUT
 
       - name: Create release note
         uses: ncipollo/release-action@v1
@@ -76,19 +76,12 @@ jobs:
             message=":cross_mark: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"    
             message="${message} Release notes canceled"        
           fi
-          echo "::set-output name=message::${message}"
+          echo "message=${message}" >> $GITHUB_OUTPUT
 
       - name: Write message to file
         run: |-
           echo "${{ steps.message.outputs.message }}"
           echo "${{ steps.message.outputs.message }}" > build.msg
 
-  #      - name: Send message to skype
-  #        uses: Eloco/docker-action-send-skype@v2
-  #        if: always()
-  #        with:
-  #          skype_username: ${{ secrets.SKYPE_USERNAME }}
-  #         skype_password: ${{ secrets.SKYPE_PASSWORD }}
-  #          skype_ids: 19:0503749da2e44ed9910046678012bdf7@thread.skype
-  #          send_msg_path: build.msg
+
 
