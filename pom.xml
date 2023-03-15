@@ -700,6 +700,9 @@
                                 <phase>process-sources</phase>
                                 <configuration>
                                     <licenseName>apache_v2</licenseName>
+                                    <excludes>
+                                        <exclude>**/*.json</exclude>
+                                    </excludes>
                                 </configuration>
                             </execution>
                             <execution>
