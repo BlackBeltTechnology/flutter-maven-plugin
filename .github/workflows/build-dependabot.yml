@@ -37,13 +37,6 @@ jobs:
           java-version: '17'
           distribution: 'zulu'
 
-      - name : 🛠️ Setup maven toolchains.xml
-        uses: cactuslab/maven-toolchains-xml-action@v1
-        with:
-          toolchains: |
-            [
-              {"jdkVersion": "17", "jdkHome": "${{steps.setupJava.outputs.path}}"}
-            ]
 
       - name: 🧹 Remove settings.xml
         run: rm $HOME/.m2/settings.xml || true
