@@ -30,11 +30,16 @@ jobs:
         id: context
         uses: zero88/gh-project-context@v1.2
 
-      - name: 🛠 Set up JDK 17
+      - name: 🧹 Remove toolchains.xml
+        run: rm $HOME/.m2/toolchains.xml || true
+
+      - name: 🛠️ Set up JDK 17
+        id : setupJava
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'zulu'
+
 
       - name: 🔢 Get the current PR number
         uses: jwalton/gh-find-current-pr@v1
