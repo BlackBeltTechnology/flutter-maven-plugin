@@ -33,11 +33,15 @@ jobs:
         id: context
         uses: zero88/gh-project-context@v1.2
 
+      - name: 🧹 Remove toolchains.xml
+        run: rm $HOME/.m2/toolchains.xml || true
+
       - name: 🛠️ Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'zulu'
+
 
       - name: 🧹 Remove settings.xml
         run: rm $HOME/.m2/settings.xml || true
