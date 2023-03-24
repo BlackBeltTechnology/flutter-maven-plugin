@@ -31,7 +31,6 @@ jobs:
         run: rm $HOME/.m2/toolchains.xml || true
 
       - name: 🛠️ Set up JDK 17
-        id : setupJava
         uses: actions/setup-java@v3
         with:
           java-version: '17'
