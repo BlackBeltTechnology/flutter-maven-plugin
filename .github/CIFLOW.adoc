@@ -80,7 +80,7 @@ Version numbers are increased using semantic versioning:
 * 2nd number in version of *develop* branch is increased when a release branch started
 * do not change version numbers on bugfix/ branches - that are applied on release branches during testing before releasing it (merging to master)
 * 3rd number in version of support/ branches is increased when started - it is used to support a previous release including new (minor) changes; support/ branches are merged back to release branch when update is released (without merging changes to master)
-* 3rd number in version of hotfix/ branches is increased when started (that are applied on both release and master branches)
+* 4th number in version of hotfix/ branches is increased when started (that are applied on both release and master branches)
 
 === Gihub action flows
 
