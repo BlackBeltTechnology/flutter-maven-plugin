@@ -50,7 +50,7 @@
 
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <slf4j-version>2.0.7</slf4j-version>
+        <slf4j-version>2.0.16</slf4j-version>
         <maven>3.9.4</maven>
         <deployOnly>false</deployOnly>
 
@@ -59,9 +59,11 @@
         -->
         <revision>1.0.2-SNAPSHOT</revision>
 
-        <surefire-version>3.0.0-M7</surefire-version>
+        <surefire-version>3.5.1</surefire-version>
         <!--suppress UnresolvedMavenProperty -->
         <logback-test-config>${maven.multiModuleProjectDirectory}/logback-test.xml</logback-test-config>
+        <logback-version>1.5.12</logback-version>
+        <lombok-version>1.18.34</lombok-version>
 
         <!-- Code Quality-->
         <sonar-maven-plugin-version>3.9.1.2184</sonar-maven-plugin-version>
@@ -69,7 +71,7 @@
         <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
         <sonar.language>java</sonar.language>
         <sonar.java.source>${maven.compiler.source}</sonar.java.source>
-        <jacoco.version>0.8.8</jacoco.version>
+        <jacoco.version>0.8.12</jacoco.version>
     </properties>
 
         
@@ -144,7 +146,7 @@
                     <dependency>
                         <groupId>org.projectlombok</groupId>
                         <artifactId>lombok</artifactId>
-                        <version>1.18.24</version>
+                        <version>${lombok-version}</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -359,7 +361,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.24</version>
+            <version>${lombok-version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -431,7 +433,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.2.11</version>
+            <version>${logback-version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
