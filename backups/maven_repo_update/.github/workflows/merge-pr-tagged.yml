@@ -1,0 +1,71 @@
+name: Auto merge pull request on merge-pr/<pr number> tags
+
+on:
+  push:
+    tags:
+      - merge-pr/*
+
+jobs:
+  merge_pr:
+    name: Merge pull request on merge-pr/<pr number> tag
+    runs-on: judong
+    timeout-minutes: 5
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: 🔄 Get PR number
+        id: pr
+        run: |
+          pr=$(echo ${{ github.ref }} | cut -d/ -f4)
+          echo "PR: $pr"
+          echo "pr=$pr" >> $GITHUB_OUTPUT
+
+      - name: 🔢 Get version
+        id: version
+        run: |
+          version=$(echo ${{ github.event.base_ref }} | cut -d/ -f3)
+          echo "Version: $version"
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: 🧪 Check the version format is in release format
+        uses: actions-ecosystem/action-regex-match@v2
+        id: check-version-release-match
+        with:
+          text: ${{ steps.version.outputs.version }}
+          regex: '^v([0-9]+\.[0-9]+\.[0-9]+)$'
+
+      - name: 🔀 Merge Pull Request (master)
+        if: |-
+          ${{ always() && steps.check-version-release-match.outputs.match != '' }}
+        uses: juliangruber/merge-pull-request-action@v1
+        with:
+          github-token: ${{ secrets.OSS_PAT }}
+          number: ${{ steps.pr.outputs.pr }}
+          method: merge
+
+      - name: 🔀 Merge Pull Request (develop)
+        if: |-
+          ${{ always() && steps.check-version-release-match.outputs.match == '' }}
+        uses: juliangruber/merge-pull-request-action@v1
+        with:
+          github-token: ${{ secrets.OSS_PAT }}
+          number: ${{ steps.pr.outputs.pr }}
+          method: squash
+
+      - name: 🧹 Delete merge-pr tag
+        uses: dev-drprasad/delete-tag-and-release@v0.2.0
+        with:
+          tag_name: 'merge-pr/${{ steps.pr.outputs.pr }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📢 Send error to discord
+        uses: sarisia/actions-status-discord@v1
+        if: ${{ always() && job.status == 'failure' }}
+        with:
+          webhook: ${{ secrets.JUDONG_DISCORD_WEBHOOK }}
+          title: "Github action"
+          description: ":x: Could not merge PR! https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
