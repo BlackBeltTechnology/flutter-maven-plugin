@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='utf-8'?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>hu.blackbelt</groupId>
@@ -257,7 +258,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore />
+                                        <ignore/>
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>
@@ -540,8 +541,8 @@
                                     <goal>deploy</goal>
                                 </goals>
                                 <configuration>
-                                    <serverId>judong-nexus-distribution</serverId>
-                                    <nexusUrl>https://nexus.judo.technology/repository/maven-judong-snapshots</nexusUrl>
+                                    <serverId>judong-distribution</serverId>
+                                    <nexusUrl>https://repository.judo.technology/repository/maven-judong-upstream/</nexusUrl>
                                     <skipStaging>true</skipStaging>
                                 </configuration>
                             </execution>
@@ -551,14 +552,14 @@
             </build>
             <distributionManagement>
                 <snapshotRepository>
-                    <id>judong-nexus-distribution</id>
+                    <id>judong-distribution</id>
                     <!--suppress UnresolvedMavenProperty -->
-                    <url>https://nexus.judo.technology/repository/maven-judong-snapshots/</url>
+                    <url>https://repository.judo.technology/repository/maven-judong-upstream/</url>
                 </snapshotRepository>
                 <repository>
-                    <id>judong-nexus-distribution</id>
+                    <id>judong-distribution</id>
                     <!--suppress UnresolvedMavenProperty -->
-                    <url>https://nexus.judo.technology/repository/maven-judong-snapshots/</url>
+                    <url>https://repository.judo.technology/repository/maven-judong-upstream/</url>
                 </repository>
             </distributionManagement>
         </profile>
@@ -720,4 +721,16 @@
         </profile>
 
     </profiles>
+    <repositories>
+        <repository>
+            <id>judong</id>
+            <url>https://repository.judo.technology/repository/maven-judong/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 </project>
