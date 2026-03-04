@@ -1,0 +1,27 @@
+# Flutter Maven Plugin
+
+> A Maven plugin that automates Flutter SDK installation and command execution within Maven projects, requiring no global Flutter installation.
+
+Key facts:
+- Java 21, Maven 3.9.4+
+- Single-module Maven plugin (`maven-plugin` packaging)
+- Two Flutter install methods: binary archive download (version-specific) or Git clone (channel-based: stable/beta/dev)
+- Multi-platform support: Windows, macOS, Linux with automatic OS/architecture detection
+- Inherits Maven proxy configuration and repository credentials for corporate environments
+- Major dependencies: Eclipse JGit, Apache Commons Compress/Exec, Apache HttpClient, Semver4j
+- License: Apache License 2.0
+
+## Docs
+
+- [README.md](README.md): Project overview, usage examples, configuration parameters, and architecture diagrams
+- [AGENTS.md](AGENTS.md): Developer guide with directory structure, class descriptions, build commands, and coding conventions
+- [CONTRIBUTING.md](CONTRIBUTING.md): Development setup and contribution guidelines
+- [.github/CIFLOW.md](.github/CIFLOW.md): CI/CD pipeline and branching strategy documentation
+
+## Optional
+
+- [.github/workflows/build.yml](.github/workflows/build.yml): Main CI/CD pipeline (build, test, deploy, release)
+- [.github/workflows/release.yml](.github/workflows/release.yml): Manual release initiation workflow
+- [LICENSE.txt](LICENSE.txt): Apache License 2.0 text
+- [RELEASE-NOTES.md](RELEASE-NOTES.md): Release notes and changelog
+- [pom.xml](pom.xml): Maven build definition with all dependencies and profiles
