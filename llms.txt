@@ -18,6 +18,10 @@ Key facts:
 - [CONTRIBUTING.md](CONTRIBUTING.md): Development setup and contribution guidelines
 - [.github/CIFLOW.md](.github/CIFLOW.md): CI/CD pipeline and branching strategy documentation
 
+## Used by
+
+- [judo-esm-ui-preview](../../eclipse/judo-esm-ui-preview): eclipse/judo-esm-ui-preview
+
 ## Optional
 
 - [.github/workflows/build.yml](.github/workflows/build.yml): Main CI/CD pipeline (build, test, deploy, release)
