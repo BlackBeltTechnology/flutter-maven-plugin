@@ -1,0 +1,17 @@
+{
+  "java.format.enabled": false,
+  "java.saveActions.organizeImports": false,
+  "java.maven.downloadSources": true,
+  "java.configuration.updateBuildConfiguration": "disabled",
+  "java.autobuild.enabled": false,
+  "java.import.exclusions": [
+    "**/node_modules/**",
+    "**/.metadata/**",
+    "**/archetype-resources/**",
+    "**/META-INF/maven/**",
+    "**/frontend-react/**/node_modules/**",
+    "**/frontend-react/**/dist/**",
+    "**/target/**"
+  ],
+  "java.compile.nullAnalysis.mode": "automatic"
+}
