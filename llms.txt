@@ -20,7 +20,7 @@ Key facts:
 
 ## Used by
 
-- [judo-esm-ui-preview](../../eclipse/judo-esm-ui-preview): eclipse/judo-esm-ui-preview
+- [judo-esm-ui-preview](../../eclipse/judo-esm-ui-preview): Eclipse plugin for real-time UI preview of ESM models
 
 ## Optional
 
